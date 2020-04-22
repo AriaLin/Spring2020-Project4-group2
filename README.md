@@ -1,6 +1,6 @@
 # Project 4: Algorithm implementation and evaluation: Collaborative Filtering
 
-### [Project Report](Spring2020-Project4-spring2020-project4-group2/blob/master/doc/Main.Rmd)
+### [Project Report](doc/Main.Rmd)
 
 Term: Spring 2020
 
