@@ -439,10 +439,10 @@ f_l
 #    result_summary[,,i] <- matrix(unlist(current_result), ncol = 10, byrow = T) 
 #    print(result_summary)
 # })
-save(result_summary, file = "../output/rmse_als_a3.Rdata")
+# save(result_summary, file = "../output/rmse_als_a3.Rdata")
 ```
 
-#### It takes a while to run this chunck so we have saved the output and can be loaded directly.
+#### It takes a while to run this chunk so we have saved the output and can be loaded directly.
 ```{r}
 load("../output/rmse_als_a3.Rdata")
 rmse <- data.frame(rbind(t(result_summary[1,,]), t(result_summary[2,,])), train_test = rep(c("Train", "Test"), each = 4), par = rep(paste("f = ", f_l[,1], ", lambda = ", 10^f_l[,2]), times = 2)) %>% gather("epoch", "RMSE", -train_test, -par)
