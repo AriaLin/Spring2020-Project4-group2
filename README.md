@@ -29,9 +29,9 @@ Term: Spring 2020
   
   + **Gong, Saier** took the lead in carrying out Model 1 (with regularization). Gong also took the first cut on creating Model 1 main R Script and Markdown file. Her script serves as the main reference for Model 1 in the Main.HTML and Main.RMD file because her model has the best performance. Gong actively took part and shared her thoughts during our weekly group discussion. 
   
-  + **Lin, Hongshan** carried out Model 2 (without regularization). Lin actively took part and shared her thoughts during our weekly group discussion. 
+  + **Lin, Hongshan** carried out Model 2 (without regularization) and write the report for Model2. Lin actively took part and shared her thoughts during our weekly group discussion. 
 
-  + **Wang, Mengchen** carried out Model 1 (with regularization). Wang actively shared files and references which greatly helped the team in running the code and completing the project. Wang actively took part and shared her thoughts during our weekly group discussion. 
+  + **Wang, Mengchen** carried out Model 1 (with regularization). Wang actively shared files and references which greatly helped the team in running the code and completing the project. Wang actively took part and shared his thoughts during our weekly group discussion. 
   
 Following [suggestions](http://nicercode.github.io/blog/2013-04-05-projects/) by [RICH FITZJOHN](http://nicercode.github.io/about/#Team) (@richfitz). This folder is orgarnized as follows.
 
