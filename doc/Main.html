@@ -1931,17 +1931,22 @@ source(&quot;../lib/ALS.R&quot;)</code></pre>
 <pre class="r"><code>source(&quot;../lib/cr_ALS.R&quot;)
 f_list &lt;- seq(15, 25, 10)
 l_list &lt;- seq(-2,1,3)
-f_l &lt;- expand.grid(f_list, l_list)</code></pre>
+f_l &lt;- expand.grid(f_list, l_list)
+f_l</code></pre>
+<pre><code>##   Var1 Var2
+## 1   15   -2
+## 2   25   -2
+## 3   15    1
+## 4   25    1</code></pre>
 <pre class="r"><code># result_summary &lt;- array(NA, dim = c(nrow(f_l), 10, 4)) 
 # run_time &lt;- system.time(for(i in 1:nrow(f_l)){
-# par &lt;- paste(&quot;f = &quot;, f_l[i,1], &quot;, lambda = &quot;, 10^f_l[i,2])
-# cat(par, &quot;\n&quot;)
-# current_result &lt;- cv.function(data, K = 5, f = f_l[i,1], lambda = 10^f_l[i,2])
-# result_summary[,,i] &lt;- matrix(unlist(current_result), ncol = 10, byrow = T) 
-# print(result_summary)
-  
-})
-# save(result_summary, file = &quot;../output/rmse_als_a3.Rdata&quot;)</code></pre>
+#    par &lt;- paste(&quot;f = &quot;, f_l[i,1], &quot;, lambda = &quot;, 10^f_l[i,2])
+#    cat(par, &quot;\n&quot;)
+#    current_result &lt;- cv.function(data, K = 5, f = f_l[i,1], lambda = 10^f_l[i,2])
+#    result_summary[,,i] &lt;- matrix(unlist(current_result), ncol = 10, byrow = T) 
+#    print(result_summary)
+# })
+save(result_summary, file = &quot;../output/rmse_als_a3.Rdata&quot;)</code></pre>
 </div>
 <div id="it-takes-a-while-to-run-this-chunck-so-we-have-saved-the-output-and-can-be-loaded-directly." class="section level4">
 <h4>It takes a while to run this chunck so we have saved the output and can be loaded directly.</h4>
@@ -1954,66 +1959,74 @@ rmse %&gt;% ggplot(aes(x = epoch, y = RMSE, col = train_test)) + geom_point() + 
 </div>
 <div id="step-3---post-processing-with-knn" class="section level3">
 <h3>Step 3 - Post-processing with KNN</h3>
-<p>After matrix factorization, post-processing will be performed to improve accuracy.</p>
-<pre class="r"><code># result &lt;- ALS(f = 10, lambda =0.1, max.iter = 5, data = data, train = data_train, test = data_test)
-# save(result, file = &quot;../output/mat_fac_als_a3.RData&quot;)</code></pre>
-<div id="knn-post-processing" class="section level4">
-<h4>KNN Post-processing</h4>
+<p>After matrix factorization, postporcessing will be performed to improve accuracy. The referenced papers are:</p>
+<p>P1:<a href="./paper/P4%20Large-scale%20Parallel%20Collaborative%20Filtering%20for%20the%20Netflix%20Prize.pdf">Global bias correction</a> Section 4.1</p>
+<p>P2:<a href="./paper/P2%20Improving%20regularized%20singular%20value%20decomposition%20for%20collaborative%20filtering%20.pdf">Postprocessing SVD with KNN</a> Section 3.5</p>
+<p>P3:<a href="./paper/P2%20Improving%20regularized%20singular%20value%20decomposition%20for%20collaborative%20filtering%20.pdf">Postprocessing SVD with kernel ridge regression</a> Section 3.6</p>
+<p>P4:<a href="./paper/P4%20Large-scale%20Parallel%20Collaborative%20Filtering%20for%20the%20Netflix%20Prize.pdf">Linearly combination of predictors</a> Section 4.1</p>
+<pre class="r"><code># result &lt;- ALS(f = 25, lambda =10,
+#                    max.iter = 5, data = data, train = data_train, test = data_test)
+save(result, file = &quot;../output/mat_fac_als_a3.RData&quot;)</code></pre>
+<div id="step-3.1---knn-post-processing" class="section level4">
+<h4>Step 3.1 - KNN Post-processing</h4>
 <pre class="r"><code>load(&quot;../output/mat_fac_als_a3.RData&quot;)
-# library(lsa)
-# library(plyr)
-# ratingmean&lt;-function(data){
-#  mean(data$rating)
-# }
-# rating &lt;- ddply(data,.(movieId),ratingmean)
-# rating$index&lt;-c(1:nrow(rating))
-# l_distance&lt;-cosine(result$Movie)
-# diag(l_distance)&lt;-0
-# cos_id&lt;-rep(1:I,ncol=I)
-# knn_r&lt;-rep(1:I,ncol=I)
-# for (i in 1:I){
-#    cos_id[i]&lt;-which.max(rank(l_distance[,i]))
-#    knn_r[i]&lt;-rating[rating$index==cos_id[i],]$V1
-#  }</code></pre>
+library(lsa)
+library(plyr)
+ratingmean&lt;-function(data){
+  mean(data$rating)
+}
+rating&lt;-ddply(data,.(movieId),ratingmean)
+rating$index&lt;-c(1:nrow(rating))
+l_distance&lt;-cosine(result$Movie)
+diag(l_distance)&lt;-0
+cos_id&lt;-rep(1:I,ncol=I)
+knn_r&lt;-rep(1:I,ncol=I)
+for (i in 1:I){
+    cos_id[i]&lt;-which.max(rank(l_distance[,i]))
+    knn_r[i]&lt;-rating[rating$index==cos_id[i],]$V1
+  }</code></pre>
 </div>
-<div id="linear-regression-for-training-dataset" class="section level4">
-<h4>Linear Regression for Training dataset</h4>
-<pre class="r"><code># data_train$movieindex&lt;-dense_rank(data_train$movieId)
-# r&lt;-rep(0,nrow(data_train))
-# for (i in 1:nrow(data_train)){
-#  rowindex&lt;-data_train$userId[i]
-#  columindex&lt;-data_train$movieindex[i]
-#  qi &lt;- as.matrix(result$User[,rowindex])
-#  qj &lt;- as.matrix(result$Movie[,columindex])
-#  r[i]&lt;-t(qi)%*%qj
-#  }
-#w&lt;-knn_r[data_train$movieindex]</code></pre>
-<pre class="r"><code>#data_train_linear&lt;-as.data.frame(cbind(data_train$rating,r,w))
-#fit&lt;-lm(V1~r+w,data=data_train_linear)
-#exp_rating&lt;-predict(fit,data_train_linear)
-#(rmse_adj &lt;- sqrt(mean((data_train_linear$V1 - exp_rating)^2)))
-#cat(&quot;The RMSE train of the adjusted model is&quot;, rmse_adj)</code></pre>
+<div id="step-3.2---linear-regression-for-training-dataset" class="section level4">
+<h4>Step 3.2 - Linear Regression for Training dataset</h4>
+<pre class="r"><code>data_train$movieindex&lt;-dense_rank(data_train$movieId)
+r&lt;-rep(0,nrow(data_train))
+for (i in 1:nrow(data_train)){
+  rowindex&lt;-data_train$userId[i]
+  columindex&lt;-data_train$movieindex[i]
+  qi &lt;- as.matrix(result$User[,rowindex])
+  qj &lt;- as.matrix(result$Movie[,columindex])
+  r[i]&lt;-t(qi)%*%qj
+  }
+w&lt;-knn_r[data_train$movieindex]</code></pre>
+<pre class="r"><code>data_train_linear&lt;-as.data.frame(cbind(data_train$rating,r,w))
+fit&lt;-lm(V1~r+w,data=data_train_linear)
+exp_rating&lt;-predict(fit,data_train_linear)
+(rmse_adj &lt;- sqrt(mean((data_train_linear$V1 - exp_rating)^2)))</code></pre>
+<pre><code>## [1] 0.5906382</code></pre>
+<pre class="r"><code>cat(&quot;The RMSE train of the adjusted model is&quot;, rmse_adj)</code></pre>
+<pre><code>## The RMSE train of the adjusted model is 0.5906382</code></pre>
 </div>
-<div id="prediction" class="section level4">
-<h4>Prediction</h4>
-<pre class="r"><code>#data_test$movieindex&lt;-dense_rank(data_test$movieId)
-#r1&lt;-rep(0,nrow(data_test))
-#for (i in 1:nrow(data_test)){
- # rowindex&lt;-data_test$userId[i]
-  #columindex&lt;-data_test$movieindex[i]
-  #qi &lt;- as.matrix(result$User[,rowindex])
-  #qj &lt;- as.matrix(result$Movie[,columindex])
-  #r1[i]&lt;-t(qi)%*%qj
-#}
-#w1&lt;-knn_r[data_test$movieindex]</code></pre>
-<pre class="r"><code>#data_test_linear&lt;-as.data.frame(cbind(data_test$rating,r1,w1))
-#exp_rating_test&lt;-predict(fit,data_test_linear)
-#rmse_adj_test &lt;- sqrt(mean((data_test_linear$V1 - exp_rating_test)^2))
-#cat(&quot;The RMSE test of the adjusted model is&quot;, rmse_adj_test)</code></pre>
+<div id="step-3.3---prediction" class="section level4">
+<h4>Step 3.3 - Prediction</h4>
+<pre class="r"><code>data_test$movieindex&lt;-dense_rank(data_test$movieId)
+r1&lt;-rep(0,nrow(data_test))
+for (i in 1:nrow(data_test)){
+  rowindex&lt;-data_test$userId[i]
+  columindex&lt;-data_test$movieindex[i]
+  qi &lt;- as.matrix(result$User[,rowindex])
+  qj &lt;- as.matrix(result$Movie[,columindex])
+  r1[i]&lt;-t(qi)%*%qj
+}
+w1&lt;-knn_r[data_test$movieindex]</code></pre>
+<pre class="r"><code>data_test_linear&lt;-as.data.frame(cbind(data_test$rating,r1,w1))
+exp_rating_test&lt;-predict(fit,data_test_linear)
+rmse_adj_test &lt;- sqrt(mean((data_test_linear$V1 - exp_rating_test)^2))
+cat(&quot;The RMSE test of the adjusted model is&quot;, rmse_adj_test)</code></pre>
+<pre><code>## The RMSE test of the adjusted model is 1.34381</code></pre>
 </div>
 </div>
-<div id="step-4-evaluation" class="section level3">
-<h3>Step 4 Evaluation</h3>
+<div id="step-4---evaluation" class="section level3">
+<h3>Step 4 - Evaluation</h3>
 <p>You should visualize training and testing RMSE by different dimension of factors and epochs (<a href="https://towardsdatascience.com/epoch-vs-iterations-vs-batch-size-4dfb9c7ce9c9">One Epoch is when an ENTIRE dataset is passed forward and backward through the neural network only ONCE</a>).</p>
 <pre class="r"><code>library(ggplot2)
 RMSE &lt;- data.frame(epochs = seq(1, 5, 1), Training_MSE = result$train_RMSE, Test_MSE = result$test_RMSE) %&gt;% gather(key = train_or_test, value = RMSE, -epochs)
@@ -2021,8 +2034,9 @@ RMSE %&gt;% ggplot(aes(x = epochs, y = RMSE,col = train_or_test)) + geom_point()
 <p><img src="data:image/png;base64,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uQhDousBBQAYLNwCNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQ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cx1PxemEATXZKKfTGV2bm+YF7fE11/FUnE4YUJONcjqdT7W56V7QHl9zHU/F6YQBNdkop9PZTJub9gXt8TXX8VScThhQk41yOp3NxIAuhiHBgJpslNPpbCYGdDEMCQbUZKOcTmczMaCLYUgwoCYb5XQ6n4onkRbCkGBATTbK6XRGF6cxzYchwYCabJTT6ZwyTqSfC0OCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDousBBQAYLNwCNdkop9N5bZSLMCQYUJONcjqd1zbgcpsF66c7norTCQNqslFOp/Pahltuc/NYC9rxVJxOGFCTjXI6ndc22HKbm8db0I6n4nTCgJpslNPpvLahltvcPOaCdjwVpxMG1GSjnE7ntQ21HAOqgAE12Sin03ltQy3HgCpgQE02yul0XttQyzGgChhQk41yOp3XNthyPIkkgAE12Sin03ltwy3HaUztYUBNNsrpdF7bgMtxIn1rGFCTjXI6nddGuQhDggE12Sin03ltlIswJBhQk41yOp3XRrkIQ4IBNdkop9N5bZSLMCQYUJONcjqd10a5CEOCATXZKKfTeW2UizAkGFCTjXI6nddGuQhDggE1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" width="672" /></p>
 </div>
 </div>
-<div id="section-3-evaluation-and-conclusion" class="section level2">
-<h2>Section 3: Evaluation and Conclusion</h2>
+<div id="section-3---evaluation-and-conclusion" class="section level2">
+<h2>Section 3 - Evaluation and Conclusion</h2>
+<p>The summary of the model performances is as follows.</p>
 <pre><code>##     Model         Method  f lambda Train RMSE Test RMSE
 ## 1 Model 1 ALS + TD + KNN 20   0.01      0.793     0.873
 ## 2 Model 2      ALS + KNN 10    0.1      0.591     1.344</code></pre>
