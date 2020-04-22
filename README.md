@@ -27,7 +27,7 @@ Term: Spring 2020
   
   + **Duong, Tram** took the lead in carrying out Model 2 (without regularization). Duong also took the first cut on creating Model 2 main R Script and Markdown file. Her script serves as the main reference for Model 2 in the Main.HTML and Main.RMD file because her model has the best performance. Duong actively took part and shared her thoughts during our weekly group discussion. 
   
-  + **Gong, Saier** took the lead in carrying out Model 1 (with regularization). Gong also took the first cut on creating Model 1 main R Script and Markdown file. Her script serves as the main reference for Model 1 in the Main.HTML and Main.RMD file because her model has the best performance. Duong actively took part and shared her thoughts during our weekly group discussion. 
+  + **Gong, Saier** took the lead in carrying out Model 1 (with regularization). Gong also took the first cut on creating Model 1 main R Script and Markdown file. Her script serves as the main reference for Model 1 in the Main.HTML and Main.RMD file because her model has the best performance. Gong actively took part and shared her thoughts during our weekly group discussion. 
   
   + **Lin, Hongshan** carried out Model 2 (without regularization). Lin actively took part and shared her thoughts during our weekly group discussion. 
 
