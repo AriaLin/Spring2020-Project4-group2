@@ -59,6 +59,7 @@ source("../lib/cr_ALS.R")
 f_list <- seq(15, 25, 10)
 l_list <- seq(-2,1,3)
 f_l <- expand.grid(f_list, l_list)
+f_l
 ```
 
 ```{r, eval=FALSE}
@@ -95,7 +96,7 @@ P3:[Postprocessing SVD with kernel ridge regression](./paper/P2 Improving regula
 P4:[Linearly combination of predictors](./paper/P4 Large-scale Parallel Collaborative Filtering for the Netflix Prize.pdf) Section 4.1
 
 ```{r, eval= FALSE}
-result <- ALS(f = 10, lambda =0.1,
+result <- ALS(f = 25, lambda =10,
                     max.iter = 5, data = data, train = data_train, test = data_test)
 save(result, file = "../output/mat_fac_als_a3.RData")
 ```
